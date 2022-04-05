@@ -1,6 +1,19 @@
 import boto3
 from boto3.dynamodb.conditions import Key, Attr
 from datetime import datetime, timedelta
+from botocore.exceptions import ClientError
+
+
+def get_item(n,t):
+    dynamodb = boto3.resource('dynamodb')
+    table = dynamodb.Table('NodesResources')
+
+    try:
+        response = table.get_item(Key={'NodeId': n, 'Timestamp': t})
+    except ClientError as e:
+        print(e.response['Error']['Message'])
+    else:
+        return response['Item']
 
 
 def query_node_resources(n):
@@ -55,6 +68,14 @@ def scan_nodes_with_high_load(t):
 
 if __name__ == '__main__':
     node_id = 'node_with_id_0'
+
+    # 0
+    # to get data using get_item we need the whole composite key (primary key + sort key) - so the result is None or 1
+    timestamp = '2022-04-04T21:10:03.990170'
+    print(f"Get data for the node {node_id}")
+    record = get_item(node_id, timestamp)
+    print(record['NodeId'], "for", record['Timestamp'], "had", record['IdleCpu'] + "% idle cpu,",
+          record['FreeMem'] + "% free memory and", record['FreeStorage'] + "% free storage")
 
     # 1
     print(f"Data for the node {node_id}")
